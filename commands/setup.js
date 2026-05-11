@@ -3,7 +3,7 @@ import {
   PermissionFlagsBits,
   ChannelType,
 } from 'discord.js';
-import { setGuildChannel, setGuildInterval } from '../database/db.js';
+import { setGuildChannel, setGuildInterval, setGuildLanguage } from '../database/db.js';
 import { renderInfoMessage } from '../services/renderer.js';
 
 export default {
@@ -35,6 +35,21 @@ export default {
             .setMaxValue(1440)
             .setRequired(true),
         ),
+    )
+    .addSubcommand(sub =>
+      sub
+        .setName('language')
+        .setDescription('Sprache der Story festlegen')
+        .addStringOption(opt =>
+          opt
+            .setName('lang')
+            .setDescription('Sprache auswählen')
+            .setRequired(true)
+            .addChoices(
+              { name: '🇩🇪 Deutsch', value: 'de' },
+              { name: '🇬🇧 English', value: 'en' },
+            ),
+        ),
     ),
 
   async execute(interaction) {
@@ -58,6 +73,19 @@ export default {
       return interaction.reply({
         ...renderInfoMessage('✅ Intervall gespeichert', [
           `Neue Story-Events erscheinen nun alle **${minutes}** Minuten.`,
+        ]),
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'language') {
+      const lang = interaction.options.getString('lang', true);
+      setGuildLanguage(interaction.guildId, lang);
+      const label = lang === 'de' ? '🇩🇪 Deutsch' : '🇬🇧 English';
+      return interaction.reply({
+        ...renderInfoMessage('✅ Sprache gespeichert', [
+          `Story-Sprache gesetzt auf **${label}**.`,
+          'Alle zukünftigen Szenen und Nachrichten erscheinen in dieser Sprache.',
         ]),
         ephemeral: true,
       });
