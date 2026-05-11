@@ -17,12 +17,14 @@ export function initDatabase() {
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS guild_settings (
-      guild_id        TEXT PRIMARY KEY,
-      channel_id      TEXT,
-      interval_mins   INTEGER DEFAULT 60,
-      active          INTEGER DEFAULT 0,
-      paused          INTEGER DEFAULT 0,
-      next_event_ts   INTEGER DEFAULT 0
+      guild_id          TEXT PRIMARY KEY,
+      channel_id        TEXT,
+      interval_mins     INTEGER DEFAULT 60,
+      active            INTEGER DEFAULT 0,
+      paused            INTEGER DEFAULT 0,
+      next_event_ts     INTEGER DEFAULT 0,
+      overview_msg_id   TEXT,
+      scene_msg_id      TEXT
     );
 
     CREATE TABLE IF NOT EXISTS guild_state (
@@ -64,6 +66,11 @@ export function initDatabase() {
       met_at      TEXT
     );
   `);
+
+  // Migration: add new columns if they don't exist yet (safe on existing DBs)
+  const cols = db.prepare(`PRAGMA table_info(guild_settings)`).all().map(r => r.name);
+  if (!cols.includes('overview_msg_id')) db.exec(`ALTER TABLE guild_settings ADD COLUMN overview_msg_id TEXT`);
+  if (!cols.includes('scene_msg_id'))    db.exec(`ALTER TABLE guild_settings ADD COLUMN scene_msg_id TEXT`);
 
   return db;
 }
@@ -110,6 +117,16 @@ export function setNextEventTs(guildId, ts) {
   getDb().prepare('UPDATE guild_settings SET next_event_ts = ? WHERE guild_id = ?').run(ts, guildId);
 }
 
+export function setOverviewMsgId(guildId, msgId) {
+  getGuildSettings(guildId);
+  getDb().prepare('UPDATE guild_settings SET overview_msg_id = ? WHERE guild_id = ?').run(msgId, guildId);
+}
+
+export function setSceneMsgId(guildId, msgId) {
+  getGuildSettings(guildId);
+  getDb().prepare('UPDATE guild_settings SET scene_msg_id = ? WHERE guild_id = ?').run(msgId, guildId);
+}
+
 export function getAllActiveGuilds() {
   return getDb().prepare('SELECT * FROM guild_settings WHERE active = 1 AND paused = 0').all();
 }
@@ -130,9 +147,9 @@ export function getGuildState(guildId) {
 }
 
 export function updateGuildScene(guildId, sceneId, chapter) {
-  getDb().prepare(`
-    UPDATE guild_state SET current_scene_id = ?, chapter = ? WHERE guild_id = ?
-  `).run(sceneId, chapter, guildId);
+  getDb().prepare(
+    'UPDATE guild_state SET current_scene_id = ?, chapter = ? WHERE guild_id = ?'
+  ).run(sceneId, chapter, guildId);
 }
 
 export function setStoryFlag(guildId, flag, value) {
@@ -153,7 +170,10 @@ export function resetGuildState(guildId) {
   d.prepare('DELETE FROM story_decisions WHERE guild_id = ?').run(guildId);
   d.prepare('DELETE FROM active_votes WHERE guild_id = ?').run(guildId);
   d.prepare('DELETE FROM known_characters WHERE guild_id = ?').run(guildId);
-  d.prepare('UPDATE guild_settings SET active = 0, paused = 0, next_event_ts = 0 WHERE guild_id = ?').run(guildId);
+  d.prepare(`UPDATE guild_settings
+    SET active = 0, paused = 0, next_event_ts = 0,
+        overview_msg_id = NULL, scene_msg_id = NULL
+    WHERE guild_id = ?`).run(guildId);
 }
 
 // ── Decisions ───────────────────────────────────────────────
@@ -166,9 +186,9 @@ export function saveDecision(guildId, sceneId, optionId, optionLabel, votes) {
 }
 
 export function getDecisions(guildId, limit = 10) {
-  return getDb().prepare(`
-    SELECT * FROM story_decisions WHERE guild_id = ? ORDER BY decided_at DESC LIMIT ?
-  `).all(guildId, limit);
+  return getDb().prepare(
+    'SELECT * FROM story_decisions WHERE guild_id = ? ORDER BY decided_at DESC LIMIT ?'
+  ).all(guildId, limit);
 }
 
 // ── Active Votes ─────────────────────────────────────────────
