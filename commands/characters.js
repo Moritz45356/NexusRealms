@@ -9,20 +9,27 @@ export default {
 
   async execute(interaction) {
     const chars = getCharacters(interaction.guildId);
+
     if (!chars.length) {
-      return interaction.reply(renderInfoMessage('Bekannte Charaktere', [
-        'Noch keine Charaktere oder Fraktionen entdeckt.',
-        'Sie werden aufgedeckt, sobald ihr in der Story auf sie trefft.',
-      ]));
+      return interaction.reply({
+        ...renderInfoMessage('Bekannte Charaktere', [
+          'Noch keine Charaktere oder Fraktionen entdeckt.',
+          'Sie werden aufgedeckt, sobald ihr in der Story auf sie trefft.',
+        ]),
+        ephemeral: true,
+      });
     }
 
     const lines = chars.flatMap(c => [
       `## ${c.name}`,
       `**Rolle:** ${c.role}  |  **Fraktion:** ${c.faction || 'Unbekannt'}`,
-      c.description,
+      c.description ?? '',
       '',
     ]);
 
-    return interaction.reply(renderInfoMessage('Bekannte Charaktere & Fraktionen', lines));
+    return interaction.reply({
+      ...renderInfoMessage('Bekannte Charaktere & Fraktionen', lines),
+      ephemeral: true,
+    });
   },
 };

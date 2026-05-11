@@ -34,7 +34,7 @@ export const scenes = {
     introVariants: [
       'Der Kontrollraum ist von alten Monitoren und zerborstenen Glasflächen umgeben.',
       'Zwischen knisternden Leitungen und toten Bildschirmen wirkt der Raum wie eingefroren.',
-      'Staub auf jedem Pult, zersplittertes Glas am Boden — der Raum erzahlt von einem abrupten Ende.',
+      'Staub auf jedem Pult, zersplittertes Glas am Boden — der Raum erzählt von einem abrupten Ende.',
     ],
     baseText:
       'Iven entdeckt ein Notfallsystem, das Teile der Anlage wieder mit Energie versorgen könnte. Doch der Zugriff ist instabil — ein falscher Impuls könnte eine automatische Sicherheitssequenz auslösen.',
@@ -64,7 +64,7 @@ export const scenes = {
       'Tausende Dateien, physisch und digital — und die meisten offenbar absichtlich zurückgelassen.',
     ],
     baseText:
-      'Zwischen beschädigten Protokollen findet Mara Hinweise auf ein Projekt mit dem Namen \u201eHelix-Kern\u201c. Gleichzeitig taucht das Symbol einer unbekannten Fraktion mehrfach in den Akten auf.',
+      'Zwischen beschädigten Protokollen findet Mara Hinweise auf ein Projekt mit dem Namen „Helix-Kern“. Gleichzeitig taucht das Symbol einer unbekannten Fraktion mehrfach in den Akten auf.',
     discoverCharacters: ['Der Schattenzirkel'],
     options: [
       {
@@ -143,7 +143,7 @@ export const scenes = {
     introVariants: [
       'Tief unter der Anlage endet der Weg an einer kreisförmigen Kernkammer.',
       'Hinter einer schweren Schleuse eröffnet sich ein Raum voller alter Reaktorringe.',
-      'Die Kammer ist großer als erwartet — und offensichtlich noch in Betrieb.',
+      'Die Kammer ist größer als erwartet — und offensichtlich noch in Betrieb.',
     ],
     baseText:
       'Im Zentrum ruht der Helix-Kern — eine Maschine, die offenbar mehr speichert als nur Energie. Gleichzeitig entdeckt die Gruppe Spuren des Schattenzirkels an mehreren Konsolen. Irgendjemand war kürzlich hier.',

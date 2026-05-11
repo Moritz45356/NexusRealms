@@ -43,18 +43,24 @@ export default {
     if (sub === 'channel') {
       const channel = interaction.options.getChannel('channel', true);
       setGuildChannel(interaction.guildId, channel.id);
-      return interaction.reply(renderInfoMessage('Setup gespeichert', [
-        `✅ Story-Kanal gesetzt auf <#${channel.id}>.`,
-        'Verwende `/story start` um die Geschichte zu beginnen.',
-      ]));
+      return interaction.reply({
+        ...renderInfoMessage('✅ Setup gespeichert', [
+          `Story-Kanal gesetzt auf <#${channel.id}>.`,
+          'Verwende `/story start` um die Geschichte zu beginnen.',
+        ]),
+        ephemeral: true,
+      });
     }
 
     if (sub === 'interval') {
       const minutes = interaction.options.getInteger('minutes', true);
       setGuildInterval(interaction.guildId, minutes);
-      return interaction.reply(renderInfoMessage('Intervall gespeichert', [
-        `⏱️ Neue Story-Events erscheinen nun alle **${minutes}** Minuten.`,
-      ]));
+      return interaction.reply({
+        ...renderInfoMessage('✅ Intervall gespeichert', [
+          `Neue Story-Events erscheinen nun alle **${minutes}** Minuten.`,
+        ]),
+        ephemeral: true,
+      });
     }
   },
 };

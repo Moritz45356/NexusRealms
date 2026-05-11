@@ -46,10 +46,10 @@ for (const file of readdirSync(eventsPath).filter(f => f.endsWith('.js'))) {
   }
 }
 
-// Initialise database, then login
+// Initialise database
 initDatabase();
 logger.info('Database initialised.');
 
-client.login(process.env.DISCORD_TOKEN).then(() => {
-  initScheduler(client);
-});
+// Login — scheduler starts ONLY after the ready event fires,
+// so the channel cache is fully populated before any fetch() calls.
+client.login(process.env.DISCORD_TOKEN);

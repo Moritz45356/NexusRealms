@@ -1,22 +1,27 @@
-import { getAllActiveGuilds, getExpiredVotes, getGuildSettings, setNextEventTs } from '../database/db.js';
+import {
+  getAllActiveGuilds,
+  getExpiredVotes,
+  getGuildState,
+  updateGuildScene,
+} from '../database/db.js';
 import { postScene, resolveVoteForGuild, scheduleNext } from './storyService.js';
 import { getScene } from '../story/scenes.js';
-import { getGuildState } from '../database/db.js';
 import logger from '../utils/logger.js';
 
 let started = false;
 
 /**
  * initScheduler
- * Two polling loops:
- *  1. Every 15 s  — resolve expired votes
- *  2. Every 30 s  — trigger scheduled story events (auto-advance without vote)
+ * Must be called AFTER the discord.js ready event so the channel cache is warm.
+ *
+ * Loop 1 — every 15 s : resolve expired votes
+ * Loop 2 — every 30 s : auto-advance scenes that have no vote options
  */
 export function initScheduler(client) {
   if (started) return;
   started = true;
 
-  // ── Loop 1: resolve expired votes ────────────────────────────
+  // ── Loop 1: resolve expired votes ──────────────────────────────
   setInterval(async () => {
     try {
       const expired = getExpiredVotes();
@@ -28,7 +33,7 @@ export function initScheduler(client) {
     }
   }, 15_000);
 
-  // ── Loop 2: auto-advance scenes that have no vote ─────────────
+  // ── Loop 2: auto-advance scenes without vote options ──────────────
   setInterval(async () => {
     try {
       const guilds = getAllActiveGuilds();
@@ -40,8 +45,8 @@ export function initScheduler(client) {
         const state = getGuildState(g.guild_id);
         const scene = getScene(state.current_scene_id);
 
-        // Only auto-advance scenes that have NO vote options
-        if (!scene || scene.options?.length) continue;
+        // Only auto-advance narration scenes (no vote options)
+        if (!scene || scene.options?.length || scene.ending) continue;
 
         const nextId = scene.autoNextSceneId;
         if (!nextId) continue;
@@ -49,7 +54,7 @@ export function initScheduler(client) {
         const nextScene = getScene(nextId);
         if (!nextScene) continue;
 
-        const { updateGuildScene } = await import('../database/db.js');
+        // All imports are top-level — no dynamic imports needed
         updateGuildScene(g.guild_id, nextScene.id, nextScene.chapter);
         scheduleNext(g, g.guild_id);
         await postScene(client, g.guild_id, g.channel_id, nextScene);

@@ -9,22 +9,23 @@ function chooseAvoidingRecent(pool, recent = []) {
 
 /**
  * generateSceneText
- * Assembles a dynamic story text from local building blocks.
- * No AI — all output is constructed from predefined text pools in story/textBlocks.js.
+ * Assembles a dynamic story text from predefined building blocks.
+ * No AI — output is constructed purely from story/textBlocks.js + scene data.
  *
- * @param {object} scene      – Scene node from story/scenes.js
- * @param {object} guildState – Current guild state row from the DB
- * @returns {string}           Assembled story text
+ * @param {object}  scene       – Scene node from story/scenes.js
+ * @param {object}  guildState  – Current guild state row from the DB
+ * @param {boolean} persist     – If false, skip the DB write (used for overview panel renders)
+ * @returns {string} Assembled story text
  */
-export function generateSceneText(scene, guildState) {
+export function generateSceneText(scene, guildState, persist = true) {
   const recent = guildState.last_variants || [];
 
-  const intro      = chooseAvoidingRecent(scene.introVariants?.length ? scene.introVariants : [scene.baseText], recent);
-  const mood       = chooseAvoidingRecent(textBlocks.moods, recent);
-  const event      = chooseAvoidingRecent(textBlocks.events, recent);
-  const reaction   = chooseAvoidingRecent(textBlocks.reactions, recent);
+  const intro       = chooseAvoidingRecent(scene.introVariants?.length ? scene.introVariants : [scene.baseText], recent);
+  const mood        = chooseAvoidingRecent(textBlocks.moods, recent);
+  const event       = chooseAvoidingRecent(textBlocks.events, recent);
+  const reaction    = chooseAvoidingRecent(textBlocks.reactions, recent);
   const consequence = chooseAvoidingRecent(textBlocks.consequences, recent);
-  const location   = chooseAvoidingRecent(textBlocks.locations, recent);
+  const location    = chooseAvoidingRecent(textBlocks.locations, recent);
 
   const parts = [
     intro,
@@ -33,14 +34,15 @@ export function generateSceneText(scene, guildState) {
     scene.baseText,
   ];
 
-  // Append a consequence line only when a significant flag is set
+  // Append a consequence line only when a significant flag is active
   const flags = guildState.story_flags || {};
   if (flags.alert_triggered || flags.sabotaged_core || flags.synced_core || flags.breakout_attempted) {
     parts.push(`> ${consequence}`);
   }
 
-  const used = [intro, mood, event, reaction, consequence, location];
-  if (guildState.guild_id) {
+  // Only write to DB when rendering the real scene message, not the overview panel
+  if (persist && guildState.guild_id) {
+    const used = [intro, mood, event, reaction, consequence, location];
     updateLastVariants(guildState.guild_id, [...recent, ...used]);
   }
 
