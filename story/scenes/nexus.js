@@ -14,7 +14,7 @@ export const nexusScenes = {
     },
     baseText: {
       de: 'Ihr steht am Rand des Nexus-Kerns — dem Ursprung aller Realitäten. Ein Riss im Gefüge zieht eure Aufmerksamkeit auf sich. Links führt ein Pfad in die Tiefe des Kerns. Rechts liegt die Verbindungsbrücke zu den anderen Universen.',
-      en: 'You stand at the edge of the Nexus Core — the origin of all realities. A tear in the fabric draws your attention. Left leads a path into the core's depth. To the right lies the connection bridge to other universes.',
+      en: "You stand at the edge of the Nexus Core — the origin of all realities. A tear in the fabric draws your attention. Left leads a path into the core's depth. To the right lies the connection bridge to other universes.",
     },
     discoverCharacters: [
       {
@@ -25,8 +25,8 @@ export const nexusScenes = {
       },
     ],
     options: [
-      { id: 'enter_core',   label: { de: 'In den Kern vordringen', en: 'Advance into the core' },       nextSceneId: 'nexus_002', setFlags: { chose_core: true } },
-      { id: 'take_bridge',  label: { de: 'Brücke überqueren', en: 'Cross the bridge' },                 nextSceneId: 'nexus_003', setFlags: { chose_bridge: true } },
+      { id: 'enter_core',  label: { de: 'In den Kern vordringen', en: 'Advance into the core' }, nextSceneId: 'nexus_002', setFlags: { chose_core: true } },
+      { id: 'take_bridge', label: { de: 'Brücke überqueren', en: 'Cross the bridge' },            nextSceneId: 'nexus_003', setFlags: { chose_bridge: true } },
     ],
   },
 
@@ -48,8 +48,8 @@ export const nexusScenes = {
       en: 'Lyra explains: the core is unstable. Someone tried to manipulate it. A data fragment floats before you — it shows coordinates. You can analyze it or feed it directly into the data stream archive.',
     },
     options: [
-      { id: 'analyze',   label: { de: 'Fragment analysieren', en: 'Analyze the fragment' },        nextSceneId: 'nexus_004', setFlags: { analyzed_fragment: true } },
-      { id: 'feed_archive', label: { de: 'Ins Archiv einspeisen', en: 'Feed into archive' },       nextSceneId: 'nexus_005', setFlags: { fed_archive: true } },
+      { id: 'analyze',      label: { de: 'Fragment analysieren', en: 'Analyze the fragment' }, nextSceneId: 'nexus_004', setFlags: { analyzed_fragment: true } },
+      { id: 'feed_archive', label: { de: 'Ins Archiv einspeisen', en: 'Feed into archive' },   nextSceneId: 'nexus_005', setFlags: { fed_archive: true } },
     ],
   },
 
@@ -79,8 +79,8 @@ export const nexusScenes = {
       },
     ],
     options: [
-      { id: 'trust_kairo',    label: { de: 'Kairo vertrauen', en: 'Trust Kairo' },         nextSceneId: 'nexus_004', setFlags: { trusted_kairo: true } },
-      { id: 'capture_kairo',  label: { de: 'Kairo festhalten', en: 'Capture Kairo' },       nextSceneId: 'nexus_006', setFlags: { captured_kairo: true } },
+      { id: 'trust_kairo',   label: { de: 'Kairo vertrauen', en: 'Trust Kairo' },   nextSceneId: 'nexus_004', setFlags: { trusted_kairo: true } },
+      { id: 'capture_kairo', label: { de: 'Kairo festhalten', en: 'Capture Kairo' }, nextSceneId: 'nexus_006', setFlags: { captured_kairo: true } },
     ],
   },
 
@@ -102,8 +102,8 @@ export const nexusScenes = {
       en: 'The coordinates lead to a hidden laboratory — deep in the Nexus Core. There, a weapon is being built that could rewrite the entire Nexus. You have two options: infiltrate the lab or warn the other Keepers.',
     },
     options: [
-      { id: 'infiltrate', label: { de: 'Labor infiltrieren', en: 'Infiltrate the lab' },         nextSceneId: 'nexus_007', setFlags: { infiltrated_lab: true } },
-      { id: 'warn_keepers', label: { de: 'Hüter warnen', en: 'Warn the Keepers' },               nextSceneId: 'nexus_008', setFlags: { warned_keepers: true } },
+      { id: 'infiltrate',   label: { de: 'Labor infiltrieren', en: 'Infiltrate the lab' }, nextSceneId: 'nexus_007', setFlags: { infiltrated_lab: true } },
+      { id: 'warn_keepers', label: { de: 'Hüter warnen', en: 'Warn the Keepers' },         nextSceneId: 'nexus_008', setFlags: { warned_keepers: true } },
     ],
   },
 
@@ -125,8 +125,8 @@ export const nexusScenes = {
       en: 'The archive reconstructs a deleted memory: a Keeper deliberately weakened the Nexus — to imprison something that was once free. Now you know more than you wanted to.',
     },
     options: [
-      { id: 'free_entity',  label: { de: 'Das Eingesperrte befreien', en: 'Free the imprisoned' },  nextSceneId: 'nexus_009', setFlags: { freed_entity: true } },
-      { id: 'reseal',       label: { de: 'Versiegelung verstärken', en: 'Reinforce the seal' },      nextSceneId: 'nexus_008', setFlags: { resealed: true } },
+      { id: 'free_entity', label: { de: 'Das Eingesperrte befreien', en: 'Free the imprisoned' }, nextSceneId: 'nexus_009', setFlags: { freed_entity: true } },
+      { id: 'reseal',      label: { de: 'Versiegelung verstärken', en: 'Reinforce the seal' },    nextSceneId: 'nexus_008', setFlags: { resealed: true } },
     ],
   },
 
@@ -148,8 +148,8 @@ export const nexusScenes = {
       en: 'Kairo speaks freely: the Keepers themselves are the problem. They do not control the Nexus — they abuse it. He offers a deal: his help in exchange for his freedom.',
     },
     options: [
-      { id: 'accept_deal',  label: { de: 'Deal annehmen', en: 'Accept deal' },        nextSceneId: 'nexus_007', setFlags: { kairo_ally: true } },
-      { id: 'reject_deal',  label: { de: 'Deal ablehnen', en: 'Reject deal' },        nextSceneId: 'nexus_008', setFlags: { kairo_prisoner: true } },
+      { id: 'accept_deal', label: { de: 'Deal annehmen', en: 'Accept deal' }, nextSceneId: 'nexus_007', setFlags: { kairo_ally: true } },
+      { id: 'reject_deal', label: { de: 'Deal ablehnen', en: 'Reject deal' }, nextSceneId: 'nexus_008', setFlags: { kairo_prisoner: true } },
     ],
   },
 
@@ -171,8 +171,8 @@ export const nexusScenes = {
       en: 'The traitor is no stranger — it is Lyra herself. She believes the Nexus must be rewritten to save all realities. The weapon is the tool. You must decide: stop her or hear her out.',
     },
     options: [
-      { id: 'stop_lyra',    label: { de: 'Lyra aufhalten', en: 'Stop Lyra' },          nextSceneId: 'nexus_ending_order', setFlags: { stopped_lyra: true } },
-      { id: 'hear_lyra',    label: { de: 'Lyra anhören', en: 'Hear Lyra out' },        nextSceneId: 'nexus_ending_rewrite', setFlags: { heard_lyra: true } },
+      { id: 'stop_lyra', label: { de: 'Lyra aufhalten', en: 'Stop Lyra' },    nextSceneId: 'nexus_ending_order',   setFlags: { stopped_lyra: true } },
+      { id: 'hear_lyra', label: { de: 'Lyra anhören', en: 'Hear Lyra out' },  nextSceneId: 'nexus_ending_rewrite', setFlags: { heard_lyra: true } },
     ],
   },
 
@@ -194,8 +194,8 @@ export const nexusScenes = {
       en: 'The Council is divided. One faction wants to act, the other doubts. Time is running out — the weapon will be activated soon. You have the final word.',
     },
     options: [
-      { id: 'rally_council',  label: { de: 'Rat einigen', en: 'Unite the council' },        nextSceneId: 'nexus_ending_order', setFlags: { rallied_council: true } },
-      { id: 'act_alone',      label: { de: 'Allein handeln', en: 'Act alone' },             nextSceneId: 'nexus_ending_solitary', setFlags: { acted_alone: true } },
+      { id: 'rally_council', label: { de: 'Rat einigen', en: 'Unite the council' }, nextSceneId: 'nexus_ending_order',    setFlags: { rallied_council: true } },
+      { id: 'act_alone',     label: { de: 'Allein handeln', en: 'Act alone' },      nextSceneId: 'nexus_ending_solitary', setFlags: { acted_alone: true } },
     ],
   },
 
@@ -217,7 +217,7 @@ export const nexusScenes = {
       en: 'The imprisoned entity is no threat — it was a victim. It knows the true origin of the Nexus and offers its knowledge. But knowledge of this kind always has a price.',
     },
     options: [
-      { id: 'accept_knowledge', label: { de: 'Wissen annehmen', en: 'Accept the knowledge' }, nextSceneId: 'nexus_ending_rewrite', setFlags: { accepted_knowledge: true } },
+      { id: 'accept_knowledge', label: { de: 'Wissen annehmen', en: 'Accept the knowledge' }, nextSceneId: 'nexus_ending_rewrite',  setFlags: { accepted_knowledge: true } },
       { id: 'refuse_knowledge', label: { de: 'Ablehnen', en: 'Refuse' },                      nextSceneId: 'nexus_ending_solitary', setFlags: { refused_knowledge: true } },
     ],
   },
