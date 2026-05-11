@@ -27,7 +27,7 @@ import { getScene, UNIVERSE_START_SCENES } from '../story/scenes/index.js';
 import { renderOverviewPanel, renderSceneMessage } from './renderer.js';
 import logger from '../utils/logger.js';
 
-const VOTE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const VOTE_DURATION_MS = 5 * 60 * 1000;
 
 // ────────────────────────────────────────────────────────────
 // OVERVIEW PANEL
@@ -37,8 +37,8 @@ export async function upsertOverviewPanel(client, guildId) {
   const settings = getGuildSettings(guildId);
   if (!settings.channel_id) return;
 
-  const state    = getGuildState(guildId);
-  const scene    = getScene(state.current_scene_id);
+  const state = getGuildState(guildId);
+  const scene = getScene(state.current_scene_id);
   if (!scene) return;
 
   const vote      = getActiveVote(guildId);
@@ -71,7 +71,6 @@ export async function startStoryForGuild(client, guildId) {
   const settings = getGuildSettings(guildId);
   if (!settings.channel_id) throw new Error('Kein Story-Kanal konfiguriert. Nutze /setup channel.');
 
-  // Assign a random universe if not set yet
   let universe = settings.universe;
   if (!universe) {
     universe = pickRandomUniverse();
@@ -99,7 +98,7 @@ export async function postScene(client, guildId, channelId, scene) {
   const guildState = getGuildState(guildId);
   const lang       = settings.language || 'de';
 
-  // Discover characters (bilingual fields resolved via t())
+  // Discover characters — resolve bilingual fields
   for (const char of (scene.discoverCharacters || [])) {
     addCharacter(
       guildId,
@@ -113,7 +112,8 @@ export async function postScene(client, guildId, channelId, scene) {
 
   const channel = await client.channels.fetch(channelId);
   const endsAt  = scene.options?.length ? Date.now() + VOTE_DURATION_MS : null;
-  const payload = renderSceneMessage(scene, guildState, endsAt);
+  // Pass lang so renderer resolves all bilingual labels correctly
+  const payload = renderSceneMessage(scene, guildState, endsAt, lang);
 
   // Delete previous scene message (keeps channel clean)
   if (settings.scene_msg_id) {
@@ -174,13 +174,14 @@ export async function resolveVoteForGuild(client, voteRow) {
       const sceneMsg = await channel.messages.fetch(settings.scene_msg_id);
 
       const disabledRows = scene.options.reduce((rows, opt, i) => {
-        const rowIdx = Math.floor(i / 5);
+        const rowIdx   = Math.floor(i / 5);
         if (!rows[rowIdx]) rows[rowIdx] = new ActionRowBuilder();
         const isWinner = opt.id === winningOption.id;
+        const optLabel = t(opt.label, lang);
         rows[rowIdx].addComponents(
           new ButtonBuilder()
             .setCustomId(`storyvote:${scene.id}:${opt.id}`)
-            .setLabel(isWinner ? `✅ ${t(opt.label, lang)} (${Math.max(0, highest)})` : t(opt.label, lang))
+            .setLabel(isWinner ? `✅ ${optLabel} (${Math.max(0, highest)})` : optLabel)
             .setStyle(isWinner ? ButtonStyle.Success : ButtonStyle.Secondary)
             .setDisabled(true),
         );
@@ -188,7 +189,7 @@ export async function resolveVoteForGuild(client, voteRow) {
       }, []);
 
       const stateForRender = getGuildState(voteRow.guild_id);
-      const closedPayload  = renderSceneMessage(scene, stateForRender, null);
+      const closedPayload  = renderSceneMessage(scene, stateForRender, null, lang);
       closedPayload.components = [
         ...closedPayload.components.filter(c => !(c instanceof ActionRowBuilder)),
         ...disabledRows,
@@ -229,6 +230,7 @@ export async function resolveVoteForGuild(client, voteRow) {
 
 async function postEndingScene(client, guildId, channelId, scene, lang) {
   const channel = await client.channels.fetch(channelId);
+  const de      = lang === 'de';
   const endText = t(scene.endingText, lang) || t(scene.baseText, lang);
   const title   = t(scene.title, lang);
 
@@ -238,7 +240,7 @@ async function postEndingScene(client, guildId, channelId, scene, lang) {
       description: endText,
       color: 0xf4c542,
       footer: {
-        text: lang === 'de'
+        text: de
           ? 'Die Geschichte ist abgeschlossen. Starte neu mit /story start.'
           : 'The story is complete. Restart with /story start.',
       },
