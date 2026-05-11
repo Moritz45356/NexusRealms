@@ -14,14 +14,16 @@ import {
   saveDecision,
   setGuildActive,
   setGuildPaused,
+  setGuildUniverse,
   setNextEventTs,
   setOverviewMsgId,
   setSceneMsgId,
   setStoryFlag,
   updateGuildScene,
 } from '../database/db.js';
-import { characters as allCharacters } from '../story/characters.js';
-import { getScene } from '../story/scenes.js';
+import { t } from '../utils/i18n.js';
+import { pickRandomUniverse } from '../story/universes.js';
+import { getScene, UNIVERSE_START_SCENES } from '../story/scenes/index.js';
 import { renderOverviewPanel, renderSceneMessage } from './renderer.js';
 import logger from '../utils/logger.js';
 
@@ -31,14 +33,7 @@ const VOTE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 // OVERVIEW PANEL
 // ────────────────────────────────────────────────────────────
 
-/**
- * upsertOverviewPanel
- * Always edits the stored overview message in-place.
- * Falls back to creating + pinning a new one if it was deleted.
- * Always reads FRESH settings from DB so timestamps are current.
- */
 export async function upsertOverviewPanel(client, guildId) {
-  // Re-read settings fresh every time so next_event_ts is up to date
   const settings = getGuildSettings(guildId);
   if (!settings.channel_id) return;
 
@@ -72,45 +67,48 @@ export async function upsertOverviewPanel(client, guildId) {
 // STORY FLOW
 // ────────────────────────────────────────────────────────────
 
-/**
- * startStoryForGuild
- * Activates the story, posts/updates overview + first scene.
- */
 export async function startStoryForGuild(client, guildId) {
   const settings = getGuildSettings(guildId);
   if (!settings.channel_id) throw new Error('Kein Story-Kanal konfiguriert. Nutze /setup channel.');
 
+  // Assign a random universe if not set yet
+  let universe = settings.universe;
+  if (!universe) {
+    universe = pickRandomUniverse();
+    setGuildUniverse(guildId, universe);
+  }
+
+  const startSceneId = UNIVERSE_START_SCENES[universe];
+  if (!startSceneId) throw new Error(`Kein Start für Universum: ${universe}`);
+
+  updateGuildScene(guildId, startSceneId, 1);
   setGuildActive(guildId, true);
   setGuildPaused(guildId, false);
 
-  const state = getGuildState(guildId);
-  const scene = getScene(state.current_scene_id);
-  if (!scene) throw new Error(`Szene nicht gefunden: ${state.current_scene_id}`);
+  const scene = getScene(startSceneId);
+  if (!scene) throw new Error(`Start-Szene nicht gefunden: ${startSceneId}`);
 
-  // Schedule BEFORE overview render so the timestamp is visible
   scheduleNext(getGuildSettings(guildId), guildId);
 
-  // 1. Overview panel (pinned, always at top)
   await upsertOverviewPanel(client, guildId);
-
-  // 2. Scene message with vote buttons below
   await postScene(client, guildId, settings.channel_id, scene);
 }
 
-/**
- * postScene
- * Deletes the previous scene message, sends a new one with vote buttons,
- * then refreshes the overview panel.
- */
 export async function postScene(client, guildId, channelId, scene) {
-  // Re-read fresh settings to get latest scene_msg_id
   const settings   = getGuildSettings(guildId);
   const guildState = getGuildState(guildId);
+  const lang       = settings.language || 'de';
 
-  // Discover characters
-  for (const name of scene.discoverCharacters || []) {
-    const char = allCharacters.find(c => c.name === name);
-    if (char) addCharacter(guildId, char.name, char.role, char.faction, char.description, scene.id);
+  // Discover characters (bilingual fields resolved via t())
+  for (const char of (scene.discoverCharacters || [])) {
+    addCharacter(
+      guildId,
+      t(char.name, lang),
+      t(char.role, lang),
+      t(char.faction, lang),
+      t(char.description, lang),
+      scene.id,
+    );
   }
 
   const channel = await client.channels.fetch(channelId);
@@ -132,17 +130,10 @@ export async function postScene(client, guildId, channelId, scene) {
     createVote(guildId, scene.id, message.id, channel.id, endsAt);
   }
 
-  // Refresh overview AFTER scene is posted and vote is created
   await upsertOverviewPanel(client, guildId).catch(() => null);
-
-  logger.info(`Posted scene ${scene.id} to guild ${guildId}`);
+  logger.info(`Posted scene ${scene.id} to guild ${guildId} (universe: ${settings.universe})`);
 }
 
-/**
- * resolveVoteForGuild
- * Tallies votes, disables buttons on scene message, advances story.
- * All discord.js classes are imported at the top — no dynamic imports.
- */
 export async function resolveVoteForGuild(client, voteRow) {
   const scene = getScene(voteRow.scene_id);
   if (!scene || !scene.options?.length) {
@@ -159,7 +150,6 @@ export async function resolveVoteForGuild(client, voteRow) {
     tally[optionId] = (tally[optionId] || 0) + 1;
   }
 
-  // Determine winner; fallback to first option if nobody voted
   let winningOption = scene.options[0];
   let highest = -1;
   for (const option of scene.options) {
@@ -167,16 +157,17 @@ export async function resolveVoteForGuild(client, voteRow) {
     if (count > highest) { winningOption = option; highest = count; }
   }
 
-  saveDecision(voteRow.guild_id, scene.id, winningOption.id, winningOption.label, Math.max(0, highest));
+  const settings = getGuildSettings(voteRow.guild_id);
+  const lang     = settings.language || 'de';
+  const label    = t(winningOption.label, lang);
+
+  saveDecision(voteRow.guild_id, scene.id, winningOption.id, label, Math.max(0, highest));
 
   for (const [flag, value] of Object.entries(winningOption.setFlags || {})) {
     setStoryFlag(voteRow.guild_id, flag, value);
   }
 
-  // Re-read settings FRESH before any channel operations
-  const settings = getGuildSettings(voteRow.guild_id);
-
-  // Disable all vote buttons on the scene message (mark winner green)
+  // Disable vote buttons on scene message, mark winner green
   if (settings.scene_msg_id && settings.channel_id) {
     try {
       const channel  = await client.channels.fetch(settings.channel_id);
@@ -189,7 +180,7 @@ export async function resolveVoteForGuild(client, voteRow) {
         rows[rowIdx].addComponents(
           new ButtonBuilder()
             .setCustomId(`storyvote:${scene.id}:${opt.id}`)
-            .setLabel(isWinner ? `✅ ${opt.label}` : opt.label)
+            .setLabel(isWinner ? `✅ ${t(opt.label, lang)} (${Math.max(0, highest)})` : t(opt.label, lang))
             .setStyle(isWinner ? ButtonStyle.Success : ButtonStyle.Secondary)
             .setDisabled(true),
         );
@@ -198,8 +189,6 @@ export async function resolveVoteForGuild(client, voteRow) {
 
       const stateForRender = getGuildState(voteRow.guild_id);
       const closedPayload  = renderSceneMessage(scene, stateForRender, null);
-
-      // Replace action rows with disabled ones
       closedPayload.components = [
         ...closedPayload.components.filter(c => !(c instanceof ActionRowBuilder)),
         ...disabledRows,
@@ -220,11 +209,11 @@ export async function resolveVoteForGuild(client, voteRow) {
   updateGuildScene(voteRow.guild_id, nextScene.id, nextScene.chapter);
   deleteActiveVote(voteRow.guild_id);
 
-  // Re-read settings one more time after all DB writes
   const freshSettings = getGuildSettings(voteRow.guild_id);
 
-  if (freshSettings.active && !freshSettings.paused && freshSettings.channel_id) {
-    // Schedule next event BEFORE posting so overview shows correct time
+  if (nextScene.ending) {
+    await postEndingScene(client, voteRow.guild_id, freshSettings.channel_id, nextScene, lang);
+  } else if (freshSettings.active && !freshSettings.paused && freshSettings.channel_id) {
     scheduleNext(freshSettings, voteRow.guild_id);
     await postScene(client, voteRow.guild_id, freshSettings.channel_id, nextScene);
   } else {
@@ -234,9 +223,37 @@ export async function resolveVoteForGuild(client, voteRow) {
   logger.info(`Resolved vote for guild ${voteRow.guild_id}: ${winningOption.id} wins.`);
 }
 
-/**
- * scheduleNext — stores next event timestamp in DB.
- */
+// ────────────────────────────────────────────────────────────
+// ENDING
+// ────────────────────────────────────────────────────────────
+
+async function postEndingScene(client, guildId, channelId, scene, lang) {
+  const channel = await client.channels.fetch(channelId);
+  const endText = t(scene.endingText, lang) || t(scene.baseText, lang);
+  const title   = t(scene.title, lang);
+
+  await channel.send({
+    embeds: [{
+      title,
+      description: endText,
+      color: 0xf4c542,
+      footer: {
+        text: lang === 'de'
+          ? 'Die Geschichte ist abgeschlossen. Starte neu mit /story start.'
+          : 'The story is complete. Restart with /story start.',
+      },
+    }],
+  });
+
+  setGuildActive(guildId, false);
+  await upsertOverviewPanel(client, guildId).catch(() => null);
+  logger.info(`Story ended for guild ${guildId} — ending: ${scene.endingType}`);
+}
+
+// ────────────────────────────────────────────────────────────
+// SCHEDULER
+// ────────────────────────────────────────────────────────────
+
 export function scheduleNext(settings, guildId) {
   const nextTs = Date.now() + (settings.interval_mins * 60 * 1000);
   setNextEventTs(guildId, nextTs);
