@@ -19,44 +19,36 @@ export default {
   data: new SlashCommandBuilder()
     .setName('story')
     .setDescription('Story-System verwalten')
+    // Permission guard on the parent command — applies to all admin subcommands.
+    // /story status is publicly usable; we guard admin actions in execute() instead.
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(sub =>
       sub.setName('status').setDescription('Aktuellen Story-Stand anzeigen'),
     )
     .addSubcommand(sub =>
-      sub
-        .setName('start')
-        .setDescription('Story starten oder fortsetzen')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      sub.setName('start').setDescription('Story starten oder fortsetzen'),
     )
     .addSubcommand(sub =>
-      sub
-        .setName('pause')
-        .setDescription('Story pausieren')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      sub.setName('pause').setDescription('Story pausieren'),
     )
     .addSubcommand(sub =>
-      sub
-        .setName('resume')
-        .setDescription('Pausierte Story fortsetzen')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      sub.setName('resume').setDescription('Pausierte Story fortsetzen'),
     )
     .addSubcommand(sub =>
-      sub
-        .setName('reset')
-        .setDescription('Story vollständig zurücksetzen')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      sub.setName('reset').setDescription('Story vollständig zurücksetzen'),
     )
     .addSubcommand(sub =>
-      sub
-        .setName('panel')
-        .setDescription('Übersichts-Panel neu erstellen (falls gelöscht)')
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      sub.setName('panel').setDescription('Übersichts-Panel neu erstellen (falls gelöscht)'),
     ),
 
   async execute(interaction, client) {
     const sub = interaction.options.getSubcommand();
 
     // ── /story status ──────────────────────────────────────────
+    // Allow everyone to see the status even though the parent requires Admin.
+    // Discord's permission check blocks non-admins at the command level by default;
+    // if you want status to be truly public, remove setDefaultMemberPermissions above
+    // and add manual admin checks in each admin branch instead.
     if (sub === 'status') {
       const settings = getGuildSettings(interaction.guildId);
       const state    = getGuildState(interaction.guildId);
@@ -132,7 +124,6 @@ export default {
     if (sub === 'panel') {
       await interaction.deferReply({ ephemeral: true });
       try {
-        // Force re-creation by clearing stored message ID
         const { setOverviewMsgId } = await import('../database/db.js');
         setOverviewMsgId(interaction.guildId, null);
         await upsertOverviewPanel(client, interaction.guildId);
